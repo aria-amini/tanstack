@@ -280,7 +280,38 @@ describe('setupWorkspace', () => {
 		setupWorkspace()
 
 		expect(readFileSync('pitchfork.local.toml', 'utf8')).toBe(
-			`[daemons.dev]\nrun = "x"\nport = ${hashPort('app:feature-x')}\n`,
+			`[daemons.dev]\nport = ${hashPort('app:feature-x')}\nrun = "x"\n`,
+		)
+	})
+
+	test('puts the app port in the dev table when another daemon follows it', () => {
+		writeFileSync(
+			'pitchfork.toml',
+			[
+				'[daemons.dev]',
+				'run = "x"',
+				'port = 3000',
+				'',
+				'[daemons.relay]',
+				'run = "y"',
+				'port = 8790',
+				'',
+			].join('\n'),
+		)
+
+		setupWorkspace()
+
+		expect(readFileSync('pitchfork.local.toml', 'utf8')).toBe(
+			[
+				'[daemons.dev]',
+				`port = ${hashPort('app:feature-x')}`,
+				'run = "x"',
+				'',
+				'[daemons.relay]',
+				'run = "y"',
+				'port = 8790',
+				'',
+			].join('\n'),
 		)
 	})
 

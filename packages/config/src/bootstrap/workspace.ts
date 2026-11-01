@@ -214,12 +214,43 @@ function setDaemonPort(appPort: number): void {
 
 	if (!existsSync(base)) return
 
-	const contents = readFileSync(base, 'utf8').replace(/^port = \d+\n/m, '')
-
 	writeFileSync(
 		'pitchfork.local.toml',
-		`${contents.trimEnd()}\nport = ${appPort}\n`,
+		withDevPort(readFileSync(base, 'utf8'), appPort),
 	)
+}
+
+const tableHeader = /^\s*\[([^\]]+)\]\s*(?:#.*)?$/
+
+// The port belongs to the dev daemon's table, wherever that table sits: other
+// daemons, such as one on a fixed port, keep theirs.
+function withDevPort(contents: string, appPort: number): string {
+	const lines: string[] = []
+	let table: string | undefined
+	let placed = false
+
+	for (const line of contents.trimEnd().split('\n')) {
+		const header = tableHeader.exec(line)
+
+		if (header) {
+			table = header[1]?.trim()
+			lines.push(line)
+
+			if (table === 'daemons.dev') {
+				lines.push(`port = ${appPort}`)
+				placed = true
+			}
+
+			continue
+		}
+
+		if (table === 'daemons.dev' && /^\s*port\s*=/.test(line)) continue
+		lines.push(line)
+	}
+
+	if (!placed) lines.push('', '[daemons.dev]', `port = ${appPort}`)
+
+	return `${lines.join('\n')}\n`
 }
 
 export function readEnvFile(path: string): Record<string, string> {
