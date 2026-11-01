@@ -1,5 +1,14 @@
 # @aamini/config
 
+## 0.2.3
+
+### Patch Changes
+
+- 97b01bc: Write the workspace app port into the `[daemons.dev]` table of
+  `pitchfork.local.toml`. It was appended to the end of the file, so in apps
+  whose `pitchfork.toml` lists another daemon after `dev`, the port landed in that
+  daemon's table and the dev server stayed on the shared default port.
+
 ## 0.2.2
 
 ### Patch Changes
